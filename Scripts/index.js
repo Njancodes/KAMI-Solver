@@ -2,7 +2,7 @@ let edgeArray = []
 let nodeArray = []
 let selectedHeads =  []
 let state = 0;
-let selectedId = 1;
+let selectedColor = 1;
 let llArray = []
 
 class List{
@@ -29,6 +29,14 @@ class LinkedList{
             this.insertList(this.head, list)
         }
     }
+    getNumOfNodes(head = this.head, num = 0){
+        num += 1
+        if(!head.next){
+            return num
+        }else{
+            return this.getNumOfNodes(head.next,num)
+        }
+    }
     insertList(head, list){
         if(!head.next){
             console.log("Head's Next Empty")
@@ -49,6 +57,34 @@ class LinkedList{
             }
         }
     }
+    freqOfColors(){
+        let map = new Map()
+        map = this.checkAmtOfcolours(map, this.head)
+        return map
+    }
+    checkAmtOfcolours(map  = new Map(), head){
+        if(head){
+            if(map.has(head.node.color)){
+                map.set(head.node.color, map.get(head.node.color) + 1) 
+                return this.checkAmtOfcolours(map, head.next)
+            }else{
+                map.set(head.node.color, 1)
+                return this.checkAmtOfcolours(map, head.next)
+            }
+        }else{
+            return map
+        }
+    }
+    printNodes(head = this.head, str = ""){
+        str += `${head.node.color}->`
+        if(!head.next){
+            str += "X"
+            return str
+        }else{
+            return this.printNodes(head.next,str)
+        }
+    }
+    
 }
 
 class Node{
@@ -56,16 +92,17 @@ class Node{
         this.radius = 20
         this.vector = createVector(x,y)
         this.hex = hex
+        this.color = 0;
         this.id = 0;
     }
     setHex(hex){
         this.hex = hex
     }
-    setId(id){
-        this.id = id
+    setColor(color){
+        this.color = color
     }
-    getId(){
-        return this.id
+    getColor(){
+        return this.color
     }
     getHex(){
         return this.hex
@@ -147,14 +184,16 @@ function keyPressed(){
         console.log(llArray)
         console.log(`The mode is ${state}`)
         console.log(`The edges are ${edgeArray}`)
+    }else if(key.toLowerCase() === 'p'){
+        printLL()
     }
     if(state === 1){
         if(Number.parseInt(key) > 0){
-            selectedId = Number.parseInt(key)
+            selectedColor = Number.parseInt(key)
         }
-        console.log("The selected color is: " + selectedId)
+        console.log("The selected color is: " + selectedColor)
     }else{
-        selectedId = 1 //Default to the first color
+        selectedColor = 1 //Default to the first color
     }
 }
 
@@ -170,14 +209,14 @@ function mouseClickedInCanvas(){
         }
     }else if(state === 1){
         console.log("Assign Color")
-        let idToHex = new Map()
+        let colorToHex = new Map()
         if(document.getElementById("colorDiv").hasChildNodes){
-            idToHex = getColors()
+            colorToHex = getColors()
         }
-        console.log(idToHex)
-        console.log(selectedId)
-        llArray[clickedNode()].head.node.setId(selectedId)
-        llArray[clickedNode()].head.node.setHex(idToHex.get(selectedId));
+        console.log(colorToHex)
+        console.log(selectedColor)
+        llArray[clickedNode()].head.node.setColor(selectedColor)
+        llArray[clickedNode()].head.node.setHex(colorToHex.get(selectedColor));
     }else if(state === 3){
         console.log("Delete Nodes and Edges")
         let delIdx = clickedNode()
@@ -185,6 +224,39 @@ function mouseClickedInCanvas(){
             return (idx === delIdx)
         })
     }
+}
+
+function printLL(){
+    let max = 0;
+    let maxFreqKeyArray = [];
+    let maxFreqKey = 0
+    let maxFreqVal = 0;
+    let biggestLL
+    llArray.forEach((ll)=>{
+        if(ll.getNumOfNodes() > max){
+            max = ll.getNumOfNodes()
+            biggestLL = ll
+        }
+    })
+    biggestLL.printNodes()
+    let map = new Map()
+    map = biggestLL.freqOfColors()
+    map.forEach((freq, key)=>{
+        if(freq > maxFreqVal){
+            maxFreqKeyArray.push(key)
+            maxFreqVal = freq
+        }
+    })
+    let headColor = biggestLL.head.node.color
+    let outLL = document.getElementById('out-ll')
+    let outTitle = document.getElementById('title')
+    let outChange = document.getElementById('out-change')
+    for(let i = 0; i < maxFreqKeyArray.length; i++){
+        if(headColor !== maxFreqKeyArray[i]){
+            maxFreqKey = maxFreqKeyArray[i]
+        }
+    }
+    outTitle.textContent = `For this graph change the node with color ${headColor} -> ${maxFreqKey} in the linked list ${biggestLL.printNodes()}`
 }
 
 function createEdge(){
